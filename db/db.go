@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -42,31 +41,37 @@ func initDB() error {
 }
 
 //helper function for initalizing checking and initialized db
-func checkInitDB() {
+func checkInitDB() error {
 	if !initialized {
-		initDB()
+		err := initDB()
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func AddBlog(b *model.BlogPost) error {
-	checkInitDB()
+	err := checkInitDB()
+	if err != nil {
+		return err
+	}
 
 	collection := DB.Database("blog_db").Collection("blogs")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	//Inserting document
-	res, err := collection.InsertOne(ctx, b)
-
-	if err != nil {
+	_, err2 := collection.InsertOne(ctx, b)
+	if err2 != nil {
 		log.Fatal("Unable to insert into DB", err)
-		return err
+		return err2
 	}
-	fmt.Println(res.InsertedID)
 
 	return nil
 }
 
+//Returns all blogs in db
 func GetBlogs() ([]bson.M, error) {
 	checkInitDB()
 
@@ -76,11 +81,22 @@ func GetBlogs() ([]bson.M, error) {
 
 	cur, err := collection.Find(ctx, bson.D{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
+	//variable for holding blogs
 	blogs := []bson.M{}
 	cur.All(ctx, &blogs)
 
 	return blogs, nil
+}
+
+func RemoveBlog() error {
+	//TODO
+	return nil
+}
+
+func UpdateBlog(b *model.BlogPost) error {
+	//TODO
+	return nil
 }

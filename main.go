@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/redcowe/blog_api/db"
 )
 
@@ -14,7 +15,9 @@ func main() {
 		return
 	}
 
-	for _, value := range blogs {
-		fmt.Println(value)
-	}
+	r := gin.Default()
+	r.GET("/blogs", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, blogs)
+	})
+	r.Run()
 }
