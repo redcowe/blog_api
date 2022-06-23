@@ -9,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/redcowe/blog_api/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -40,10 +41,15 @@ func initDB() error {
 	return nil
 }
 
-func AddBlog(b *model.BlogPost) error {
+//helper function for initalizing checking and initialized db
+func checkInitDB() {
 	if !initialized {
 		initDB()
 	}
+}
+
+func AddBlog(b *model.BlogPost) error {
+	checkInitDB()
 
 	collection := DB.Database("blog_db").Collection("blogs")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -59,4 +65,22 @@ func AddBlog(b *model.BlogPost) error {
 	fmt.Println(res.InsertedID)
 
 	return nil
+}
+
+func GetBlogs() ([]bson.M, error) {
+	checkInitDB()
+
+	collection := DB.Database("blog_db").Collection("blogs")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cur, err := collection.Find(ctx, bson.D{})
+	if err != nil {
+		panic(err)
+	}
+
+	blogs := []bson.M{}
+	cur.All(ctx, &blogs)
+
+	return blogs, nil
 }
